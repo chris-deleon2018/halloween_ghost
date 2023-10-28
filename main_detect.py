@@ -5,6 +5,7 @@ import time
 import librosa
 import soundfile
 import re
+import datetime
 
 net = cv.dnn.readNet("yolov4-tiny.weights","yolov4-tiny.cfg")
 model = cv.dnn_DetectionModel(net)
@@ -23,8 +24,10 @@ with open("classes.txt", "r") as f:
         classes.append(class_name)
 
 phrases = [
-    "Hello <object_name>! I am going to eat you!",
-    "O hey look everyone! It's a <object_name>!"
+    "Trick O Treat Yo self <object_name>! Get some of that candy yo!",
+    "HAPPY HALLOWEEN <object_name>! Take some candy, but not too much.",
+    "BOOOO! You there, <object_name>! Take some candy if you dare!",
+    "It's me Casper! Grab some candy <object_name>!"
 ]
 phrase_count = 0
 wait_count = 0
@@ -44,9 +47,9 @@ while True:
             cv.rectangle(frame,(x, y),(x + w, y + h),(200,0,50),3)
             cv.putText(frame, f'{object_name}: {round(score*100,2)}', (x, y-5), cv.FONT_HERSHEY_PLAIN, 1, (200,0,50), 2 )
             objects.add(object_name)
-    if wait_count == wait_count_threshold and not len(objects) == 0:
+    if wait_count % wait_count_threshold == 0 and not len(objects) == 0:
+        print(f'wait count: {wait_count}, phrase count: {phrase_count}')
         nouns = ""
-        #print(f'objects: {objects}')
         if len(objects) == 2:
             nouns = "<obj> and <obj>"
             for obj in objects:
@@ -66,10 +69,8 @@ while True:
             objects.clear()
         else:
             nouns = objects.pop()
-        phrase = re.sub(r'<object_name>', nouns, phrases[phrase_count % 2])
-        print(phrase) 
+        phrase = re.sub(r'<object_name>', nouns, phrases[phrase_count % len(phrases)])
         myobj = gTTS(text=phrase, lang=language, slow=False)
-        print(phrase_count)
         print(phrase)
         myobj.save("speak.mp3")
         y, sr = librosa.load("speak.mp3")
@@ -78,9 +79,14 @@ while True:
         soundfile.write("speak.wav", new_y, sr,)
         playsound("ghost_moan.wav")
         playsound("speak.wav")
+        current_time = datetime.datetime.now()
+        cv.imwrite(f'{current_time}{phrase}.jpg', frame)
         wait_count = 0
         object_name = ""
         phrase_count += 1
+    if wait_count == 1000:
+        wait_count = 0
+        phrase_count = 0
     wait_count += 1
             
         #TODO Add logic to determine how many people
