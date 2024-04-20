@@ -1,0 +1,3 @@
+# Halloween Ghost - Person Detection
+
+This was a fun Halloween project that requires a speaker (preferrably a wireless bluetooth speaker), a web camera connected to the computer, and a halloween ghost prop. The idea is to have a bowl of candy with a ghost halloween prop with a speaker hiding under the ghost to detect trick or treaters to greet the visitors with a set of phrases. These phrases are customizable and will be translated by the text to speech library. The object detection is a trained neural net provided by YoloV4, and being used to scrape the video feed to look for a person. If a person is detected, the phrase will be said in a rotating order. 
