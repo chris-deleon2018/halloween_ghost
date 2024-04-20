@@ -7,6 +7,13 @@ import soundfile
 import re
 import datetime
 
+# python3 -m pip install opencv-python
+# python3 -m pip install gTTS
+# python3 -m pip install gtts playsound
+# python3 -m pip install PyObjC
+# python3 -m pip install librosa
+# python3 -m pip install regex
+
 net = cv.dnn.readNet("yolov4-tiny.weights","yolov4-tiny.cfg")
 model = cv.dnn_DetectionModel(net)
 model.setInputParams(size=(320,320), scale=1/255)
@@ -29,6 +36,8 @@ phrases = [
     "BOOOO! You there, <object_name>! Take some candy if you dare!",
     "It's me Casper! Grab some candy <object_name>!"
 ]
+
+#phrases = ["Gobble gobble <object_name>! It is time for thanksgiving!"]
 phrase_count = 0
 wait_count = 0
 wait_count_threshold = 50
@@ -43,10 +52,13 @@ while True:
     for class_id, score, bbox in zip(class_ids, scores, bboxes):
         if score >= 0.80:
             object_name = classes[class_id]
+            if object_name == 'person':
+                object_name = 'human'
             (x,y,w,h) = bbox
             cv.rectangle(frame,(x, y),(x + w, y + h),(200,0,50),3)
             cv.putText(frame, f'{object_name}: {round(score*100,2)}', (x, y-5), cv.FONT_HERSHEY_PLAIN, 1, (200,0,50), 2 )
-            objects.add(object_name)
+            if not (object_name == 'car' or object_name == 'pottedplant'):
+                objects.add(object_name)
     if wait_count % wait_count_threshold == 0 and not len(objects) == 0:
         print(f'wait count: {wait_count}, phrase count: {phrase_count}')
         nouns = ""
@@ -76,11 +88,12 @@ while True:
         y, sr = librosa.load("speak.mp3")
         new_y = librosa.effects.pitch_shift(y, sr=sr, n_steps=-6)
         new_y = librosa.effects.time_stretch(new_y, rate=0.9)
+        new_y *= 2 # Double volume sound
         soundfile.write("speak.wav", new_y, sr,)
         playsound("ghost_moan.wav")
         playsound("speak.wav")
         current_time = datetime.datetime.now()
-        cv.imwrite(f'{current_time}{phrase}.jpg', frame)
+        cv.imwrite(f'./trick_or_treaters/{current_time}{phrase}.jpg', frame)
         wait_count = 0
         object_name = ""
         phrase_count += 1
